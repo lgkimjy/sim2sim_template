@@ -37,8 +37,14 @@ target_include_directories(sim2sim_deploy PRIVATE
   "${SIM2SIM_MUJOCO_SOURCE_DIR}/sample"
 )
 target_link_libraries(sim2sim_deploy PRIVATE
-  Eigen3::Eigen onnxruntime::onnxruntime yaml-cpp::yaml-cpp
-  libsimulate mujoco::mujoco glfw Threads::Threads lodepng
+  Eigen3::Eigen 
+  onnxruntime::onnxruntime 
+  yaml-cpp::yaml-cpp
+  libsimulate 
+  mujoco::mujoco 
+  glfw 
+  Threads::Threads 
+  lodepng
 )
 target_compile_options(sim2sim_deploy PUBLIC ${MUJOCO_SIMULATE_COMPILE_OPTIONS})
 set_target_properties(sim2sim_deploy PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
