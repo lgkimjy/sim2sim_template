@@ -1,0 +1,18 @@
+# Joint order follows RobotDefinition::kJointNames in include/RobotDefinition.hpp (must match MJCF).
+
+policy:
+  path: "" # set to your .onnx (required for load)
+  input_name: obs
+  output_name: actions
+  action_scale: 0.25
+
+command:
+  vx: 0.0
+  vy: 0.0
+  wz: 0.0
+
+default_jpos: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+Robot:
+  Kp: [1700.0, 1700.0, 1700.0, 1700.0, 1700.0, 1700.0]
+  Kd: [150.0, 150.0, 150.0, 150.0, 150.0, 150.0]
