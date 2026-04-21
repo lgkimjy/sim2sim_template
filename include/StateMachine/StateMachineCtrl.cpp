@@ -1,6 +1,6 @@
 #include "StateMachine/StateMachineCtrl.hpp"
 
-#include "StateMachine/FSM_template.hpp"
+#include "StateMachine/FSM_Template.hpp"
 
 #include <iostream>
 

@@ -1,8 +1,9 @@
-#include "StateMachine/FSM_template.hpp"
+#include "StateMachine/FSM_Template.hpp"
 
 #include <yaml-cpp/yaml.h>
 
 #include <algorithm>
+#include <filesystem>
 #include <iostream>
 #include <string>
 
@@ -37,7 +38,6 @@ Eigen::VectorXd TemplateRlState::makeObservation() const
     const Eigen::Vector3d gravity_b = robot_.fbk.base_quat.inverse() * Eigen::Vector3d(0.0, 0.0, -1.0);
     Eigen::Vector3d cmd;
     cmd << robot_.ctrl.lin_vel_d.x(), robot_.ctrl.lin_vel_d.y(), robot_.ctrl.ang_vel_d.z();
-    // gravity(3) + omega(3) + q err(dof) + dq(dof) + cmd(3)
     Eigen::VectorXd obs(3 + 3 + def_.dof + def_.dof + 3);
     obs << gravity_b, robot_.fbk.base_omega, robot_.fbk.q - robot_.param.default_jpos, robot_.fbk.dq, cmd;
     return obs;
@@ -72,6 +72,13 @@ void TemplateRlState::readConfig(const std::string& config_file)
     }
 
     robot_.policy.onnx_path = config["policy"]["path"].as<std::string>();
+    if (!robot_.policy.onnx_path.empty()) {
+        const std::filesystem::path candidate(robot_.policy.onnx_path);
+        if (!candidate.is_absolute()) {
+            const std::filesystem::path cfg_path(config_file);
+            robot_.policy.onnx_path = std::filesystem::weakly_canonical(cfg_path.parent_path() / candidate).string();
+        }
+    }
     robot_.policy.input_name = config["policy"]["input_name"].as<std::string>();
     robot_.policy.output_name = config["policy"]["output_name"].as<std::string>();
     robot_.policy.action_scale = config["policy"]["action_scale"].as<double>();

@@ -7,7 +7,6 @@
 
 #include <string>
 
-// RL task: yaml read in readConfig() (G1 FSM style), first onEnter.
 class TemplateRlState final : public States {
 public:
     TemplateRlState(RobotData& robot, const RobotDefinition& def);
@@ -23,7 +22,6 @@ private:
     RobotData& robot_;
     const RobotDefinition& def_;
     OnnxPolicy policy_;
-
     Eigen::VectorXd makeObservation() const;
     void applyPolicyAction(const Eigen::VectorXd& action);
 };
