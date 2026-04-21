@@ -1,42 +1,54 @@
-set(ONNXRUNTIME_ROOT "" CACHE PATH "Optional ONNX Runtime root")
-
-if(NOT ONNXRUNTIME_ROOT AND DEFINED ENV{ONNXRUNTIME_ROOT})
-  file(TO_CMAKE_PATH "$ENV{ONNXRUNTIME_ROOT}" ONNXRUNTIME_ROOT)
-endif()
-
-set(_hints)
-if(ONNXRUNTIME_ROOT)
-  list(APPEND _hints "${ONNXRUNTIME_ROOT}")
-endif()
-if(APPLE)
-  list(APPEND _hints /opt/homebrew/opt/onnxruntime /usr/local/opt/onnxruntime /opt/homebrew /usr/local)
-elseif(UNIX)
-  list(APPEND _hints /usr/local /opt/onnxruntime)
-endif()
-
-find_package(PkgConfig QUIET)
-if(PkgConfig_FOUND)
-  pkg_check_modules(PC_ONNXRUNTIME QUIET libonnxruntime)
-endif()
+set(SIM2SIM_ONNXRUNTIME_SOURCE_DIR "${CMAKE_SOURCE_DIR}/include/3rd-parties/onnxruntime")
 
 find_path(ONNXRUNTIME_INCLUDE_DIR
   onnxruntime_cxx_api.h
-  HINTS ${_hints} ${PC_ONNXRUNTIME_INCLUDE_DIRS}
+  HINTS "${SIM2SIM_ONNXRUNTIME_SOURCE_DIR}"
   PATH_SUFFIXES include include/onnxruntime
+  NO_DEFAULT_PATH
 )
 find_library(ONNXRUNTIME_LIBRARY
   onnxruntime
-  HINTS ${_hints} ${PC_ONNXRUNTIME_LIBRARY_DIRS}
+  HINTS "${SIM2SIM_ONNXRUNTIME_SOURCE_DIR}"
   PATH_SUFFIXES lib lib64
+  NO_DEFAULT_PATH
 )
 
+set(_onnxruntime_has_headers FALSE)
+find_path(ONNXRUNTIME_HEADER_ONLY_HINT
+  onnxruntime_cxx_api.h
+  HINTS "${SIM2SIM_ONNXRUNTIME_SOURCE_DIR}"
+  PATH_SUFFIXES
+    include
+    include/onnxruntime
+    include/onnxruntime/core/session
+  NO_DEFAULT_PATH
+)
+if(ONNXRUNTIME_HEADER_ONLY_HINT)
+  set(_onnxruntime_has_headers TRUE)
+endif()
+
 if(NOT ONNXRUNTIME_INCLUDE_DIR OR NOT ONNXRUNTIME_LIBRARY)
-  message(FATAL_ERROR
-    "ONNX Runtime not found.\n"
-    "Install it first, for example:\n"
-    "  brew install onnxruntime\n"
-    "or place it where pkg-config/CMake can find it."
-  )
+  if(_onnxruntime_has_headers AND NOT ONNXRUNTIME_LIBRARY)
+    message(FATAL_ERROR
+      "ONNX Runtime headers were found, but the runtime library was not.\n"
+      "It looks like include/3rd-parties/onnxruntime contains the source repo only.\n"
+      "Place a built/prebuilt ONNX Runtime there so this exists too:\n"
+      "  include/3rd-parties/onnxruntime/lib/libonnxruntime.*"
+    )
+  else()
+    message(FATAL_ERROR
+      "ONNX Runtime not found.\n"
+      "Place a built/prebuilt ONNX Runtime in:\n"
+      "  include/3rd-parties/onnxruntime\n"
+      "Example : (mac) from onnxruntime github, download release file, \n"
+      "  and tar -xzf onnxruntime-osx-arm64-1.25.0.tgz and mv onnxruntime-osx-arm64-1.25.0 include/3rd-parties/onnxruntime\n"
+      "  or (linux) from onnxruntime github, download release file, \n"
+      "  and tar -xzf onnxruntime-linux-arm64-1.25.0.tgz and mv onnxruntime-linux-arm64-1.25.0 include/3rd-parties/onnxruntime\n"
+      "Expected layout:\n"
+      "  include/3rd-parties/onnxruntime/include/...\n"
+      "  include/3rd-parties/onnxruntime/lib/libonnxruntime.*"
+    )
+  endif()
 endif()
 
 add_library(onnxruntime::onnxruntime UNKNOWN IMPORTED)
