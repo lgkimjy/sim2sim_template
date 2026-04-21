@@ -1,21 +1,42 @@
-set(ONNXRUNTIME_ROOT "" CACHE PATH "ONNX Runtime root")
+set(ONNXRUNTIME_ROOT "" CACHE PATH "Optional ONNX Runtime root")
 
 if(NOT ONNXRUNTIME_ROOT AND DEFINED ENV{ONNXRUNTIME_ROOT})
   file(TO_CMAKE_PATH "$ENV{ONNXRUNTIME_ROOT}" ONNXRUNTIME_ROOT)
 endif()
 
-set(_hints ${ONNXRUNTIME_ROOT})
+set(_hints)
+if(ONNXRUNTIME_ROOT)
+  list(APPEND _hints "${ONNXRUNTIME_ROOT}")
+endif()
 if(APPLE)
   list(APPEND _hints /opt/homebrew/opt/onnxruntime /usr/local/opt/onnxruntime /opt/homebrew /usr/local)
 elseif(UNIX)
   list(APPEND _hints /usr/local /opt/onnxruntime)
 endif()
 
-find_path(ONNXRUNTIME_INCLUDE_DIR onnxruntime_cxx_api.h HINTS ${_hints} PATH_SUFFIXES include include/onnxruntime)
-find_library(ONNXRUNTIME_LIBRARY onnxruntime HINTS ${_hints} PATH_SUFFIXES lib lib64)
+find_package(PkgConfig QUIET)
+if(PkgConfig_FOUND)
+  pkg_check_modules(PC_ONNXRUNTIME QUIET libonnxruntime)
+endif()
+
+find_path(ONNXRUNTIME_INCLUDE_DIR
+  onnxruntime_cxx_api.h
+  HINTS ${_hints} ${PC_ONNXRUNTIME_INCLUDE_DIRS}
+  PATH_SUFFIXES include include/onnxruntime
+)
+find_library(ONNXRUNTIME_LIBRARY
+  onnxruntime
+  HINTS ${_hints} ${PC_ONNXRUNTIME_LIBRARY_DIRS}
+  PATH_SUFFIXES lib lib64
+)
 
 if(NOT ONNXRUNTIME_INCLUDE_DIR OR NOT ONNXRUNTIME_LIBRARY)
-  message(FATAL_ERROR "ONNX Runtime not found. Use -DONNXRUNTIME_ROOT=/path/to/onnxruntime or brew install onnxruntime.")
+  message(FATAL_ERROR
+    "ONNX Runtime not found.\n"
+    "Install it first, for example:\n"
+    "  brew install onnxruntime\n"
+    "or place it where pkg-config/CMake can find it."
+  )
 endif()
 
 add_library(onnxruntime::onnxruntime UNKNOWN IMPORTED)
